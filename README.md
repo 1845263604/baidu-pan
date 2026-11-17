@@ -154,6 +154,14 @@ Cookie 不是永久的。以下情况会立即失效：
 
 ---
 
+## 上游更新了怎么办
+
+你 Fork 出去的副本**不会自动同步**本仓库的更新。需要更新时：
+
+1. 打开你 Fork 后的仓库首页
+2. 如果显示 `This branch is N commits behind limaosou:main`，点右侧 **Sync fork** → **Update branch**
+3. Secret 不会因为同步而丢失，无需重新配置
+
 ## 关于费用与作者维护
 
 - **零成本**：运行在 GitHub Actions 免费额度内。公共仓库的 Actions 分钟数不计量；私有仓库免费额度是每月 2000 分钟，本任务每月约消耗 10–20 分钟。
