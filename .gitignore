@@ -1,0 +1,12 @@
+# Cookie 等同于百度账号登录凭证，绝不能提交
+.cookie
+cookie.txt
+*.cookie
+
+# 其他
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+
+# 注意：不要忽略 .keepalive —— 保活工作流需要提交这个文件
