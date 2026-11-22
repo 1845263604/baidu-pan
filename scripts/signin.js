@@ -28,7 +28,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const superagent = require("superagent");
 
 const APP_ID = '250528';
 const WEB = '5';
@@ -92,26 +91,26 @@ async function sendSC3(title, desp) {
   }
   const uid = match[1];
   const url = `https://${uid}.max.ft07.com/${SCX_KEY}.send`;
-
-  const data = {
-    title,
-    desp: desp.replaceAll("\n", "\n\n"),
-  };
-  superagent
-    .post(url)
-    .type("form")
-    .send(data)
-    .then(() => {
-      console.log("✅ Server酱SCMax推送成功");
-    })
-    .catch((err) => {
-      if (err.response?.text) {
-        const info = JSON.parse(err.response.text);
-        console.error(`❌ Server酱SCMax推送失败:${info.info || info}`);
-      } else {
-        console.error(`❌ Server酱SCMax推送失败:${JSON.stringify(err)}`);
-      }
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams({
+        title,
+        desp: desp.replaceAll("\n", "\n\n")
+      })
     });
+    const text = await res.text();
+    if (res.ok) {
+      console.log("✅ Server酱SCMax推送成功：", text);
+    } else {
+      console.error("❌ Server酱SCMax推送失败：", text);
+    }
+  } catch (err) {
+    console.error("❌ Server酱SCMax推送异常：", err.message);
+  }
 }
 // =====================================================================
 
