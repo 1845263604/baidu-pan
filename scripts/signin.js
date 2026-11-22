@@ -77,44 +77,27 @@ const ALREADY_RE =
 const IN_ACTIONS = process.env.GITHUB_ACTIONS === 'true';
 const SUMMARY_FILE = process.env.GITHUB_STEP_SUMMARY || '';
 
-// ===================== SCMax 推送函数 superagent form版本（和你参考push代码风格一致） =====================
+// ===================== SC3推送函数 新增 =====================
 async function sendSC3(title, desp) {
-  // 兼容 SCX_KEY / SC3_KEY 两个名字，避免输错
-  const SCX_KEY = process.env.SCX_KEY || process.env.SC3_KEY;
-  if (!SCX_KEY) {
-    console.log("⚠️ 未配置SCX_KEY/SC3_KEY，跳过Server酱SCMax推送");
+  const SC3_KEY = process.env.SC3_KEY;
+  if (!SC3_KEY) {
+    console.log("⚠️ 未配置SC3_KEY，跳过SC3推送");
     return;
   }
-  const match = SCX_KEY.match(/^scx-(\d+)-/);
-  if (!match) {
-    console.log("⚠️ Key格式不对（不是scx-数字-xxx），无法解析uid，跳过推送");
-    return;
-  }
-  const uid = match[1];
-  const url = `https://${uid}.max.ft07.com/${SCX_KEY}.send`;
+  const url = `https://10348.max.ft07.com/send/${SC3_KEY}?title=${encodeURIComponent(title)}&desp=${encodeURIComponent(desp)}`;
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: new URLSearchParams({
-        title,
-        desp: desp.replaceAll("\n", "\n\n")
-      })
-    });
+    const res = await fetch(url);
     const text = await res.text();
     if (res.ok) {
-      console.log("✅ Server酱SCMax推送成功：", text);
+      console.log("✅ SC3推送成功：", text);
     } else {
-      console.error("❌ Server酱SCMax推送失败：", text);
+      console.log("❌ SC3推送失败：", text);
     }
   } catch (err) {
-    console.error("❌ Server酱SCMax推送异常：", err.message);
+    console.log("❌ SC3推送异常：", err.message);
   }
 }
-
-// =====================================================================
+// =========================================================
 
 // ---------------------------------------------------------------- 输出层
 
@@ -473,7 +456,7 @@ async function main() {
   for (const r of results) say(`${r.ok ? '[√]' : '[×]'} ${r.name}：${r.msg}`);
   say('-'.repeat(46));
 
-  // ========== 拼接推送文本，调用SCMax推送 ==========
+  // ========== 拼接推送文本，调用SC3推送 ==========
   let pushContent = `百度网盘签到 — ${today()}\n`;
   for (const r of results) {
     pushContent += `${r.ok ? '[√]' : '[×]'} ${r.name}：${r.msg}\n`;
