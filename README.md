@@ -1,5 +1,4 @@
 # 百度网盘每日自动签到
-
 > 电脑关机、手机关机，照样每天自动签到。不需要服务器，不需要花钱，不需要装任何软件。
 
 每天自动完成三件事：
@@ -10,7 +9,7 @@
 | 每日答题 | 自动作答并领取积分 |
 | 成长值查询 | 记录当前会员等级与成长值 |
 
-结果会显示在 GitHub Actions 页面上，**Cookie 失效时会自动给你发邮件**。
+结果会显示在 GitHub Actions 页面上，**Cookie 失效时会自动给你发邮件**，同时支持 Server酱 SCMax 推送签到结果到微信。
 
 ---
 
@@ -51,11 +50,11 @@
 
 > 漏了这一步，后面配好了也不会自动跑。这是最常见的失败原因。
 
-### 第三步：添加 Cookie
+### 第三步：添加 Secret（Cookie + 推送密钥，推送可选）
 
 #### 3.1 复制 Cookie（在电脑上做）
 
-1. 用 Chrome / Edge 打开 <https://pan.baidu.com> 并**登录**
+1. 用 Chrome / Edge 打开 <[https://pan.baidu.com](https://pan.baidu.com)> 并**登录**
 2. 按 `F12` 打开开发者工具
 3. 切到 **Network（网络）** 标签
 4. 按 `F5` 刷新页面
@@ -67,14 +66,22 @@
 > 实测签到接口需要 `BDUSS` 和 `STOKEN` 同时存在，只给 BDUSS 一定失败（返回 `Param error`）。
 > 整行大约 2000–3000 字符，很长是正常的。
 
-#### 3.2 存进 Secret
+#### 3.2 存入仓库机密 Secret
 
 1. 回到你的仓库 → **Settings（设置）**
 2. 左侧 **Secrets and variables** → **Actions**
 3. 点 **New repository secret**
-4. Name 填：`BAIDU_COOKIE`（必须一模一样，全大写）
-5. Secret 填：刚才复制的那一整行
-6. 点 **Add secret**
+
+| Name（名称） | Secret（内容） | 是否必填 |
+| ---- | ---- | ---- |
+| `BAIDU_COOKIE` | 刚刚复制的网盘Cookie完整内容 | ✅ 必填 |
+| `SCX_KEY` | SCMax密钥（格式：`scx-数字-xxx`） | ⭕ 选填，推送用 |
+| `SC3_KEY` | SCMax密钥（和SCX_KEY填一样内容，防填错兜底） | ⭕ 选填，推送用 |
+
+> 推送说明：
+> - 不想微信推送签到结果，只填 `BAIDU_COOKIE` 即可，脚本会自动跳过推送，不影响签到
+> - 两个推送密钥只需要填任意一个，脚本会自动兼容读取；两个都填也可以，作为兜底防止名字写错
+> - 密钥必须是 SCMax（scx开头），老版SCU开头的Server酱不兼容
 
 ### 第四步：手动跑一次验证
 
@@ -83,18 +90,30 @@
 3. 右侧 **Run workflow** → 再点绿色的 **Run workflow**
 4. 等 20 秒左右，点进这次运行记录
 
-成功的样子：
-
+✅ 成功样例（无推送）：
 ```
-[√] 签到：签到成功，获得积分 14
-[√] 答题：答题成功，获得积分 3
-[√] 成长值：会员等级 8，成长值 67493
+百度网盘每日签到 - 2026-11-22
+--------------------------------
+[√] 签到：今日已签到（重复执行，正常）
+[√] 答题：今日已答题（重复执行，正常）
+[√] 成长值：会员等级 10，成长值 186204
+--------------------------------
+⚠️ 未配置SCX_KEY/SC3_KEY，跳过Server酱SCMax推送
 [√] 全部完成
 ```
 
-页面底部还会有一张结果表格。
-
-看到 `[√]` 就说明配好了，之后每天自动跑，你不用管。
+✅ 成功样例（推送正常）：
+```
+百度网盘每日签到 - 2026-11-22
+--------------------------------
+[√] 签到：今日已签到（重复执行，正常）
+[√] 答题：今日已答题（重复执行，正常）
+[√] 成长值：会员等级 10，成长值 186204
+--------------------------------
+ℹ️ 正在尝试SC3/SCMax推送，key已读取
+✅ Server酱SCMax推送成功：xxx
+[√] 全部完成
+```
 
 > 如果看到 `今日已签到（重复执行，正常）` 也是成功——意思是今天已经签过了。
 
@@ -124,10 +143,9 @@ Cookie 不是永久的。以下情况会立即失效：
 - 主动退出了所有设备
 - 长时间未登录（通常能撑几个月）
 
-**你会自动收到通知**：失效时 Actions 会运行失败，GitHub 会给你的注册邮箱发一封失败邮件。
+**你会自动收到通知**：失效时 Actions 会运行失败，GitHub 会给你的注册邮箱发一封失败邮件；配置了SCMax推送，也会收到失败推送。
 
-**修复方法**：重复「第三步」，用新 Cookie 覆盖那个 Secret。
-
+**修复方法**：重复「第三步」，用新 Cookie 覆盖 `BAIDU_COOKIE`。
 - 更新 Secret：Settings → Secrets and variables → Actions → 点 `BAIDU_COOKIE` → **Update**
 - 更新后去 Actions 手动 Run 一次确认
 
@@ -139,6 +157,8 @@ Cookie 不是永久的。以下情况会立即失效：
 | `Cookie 已失效` | 登录凭证过期 | 重新获取 Cookie 并更新 Secret |
 | `Cookie 不完整（缺少 STOKEN 字段）` | 只复制了 BDUSS 一段 | 复制完整的一整行 Cookie |
 | `缺少 BAIDU_COOKIE` | 没加 Secret，或名字写错 | 确认 Secret 名字是 `BAIDU_COOKIE` |
+| `未配置SCX_KEY/SC3_KEY，跳过Server酱SCMax推送` | 没有填推送密钥 | 不需要推送直接忽略；需要推送就新增Secret |
+| `Key格式不是 scx-数字-xxx，跳过推送` | 密钥不是SCMax格式 | 去SCMax官网获取scx开头密钥 |
 | 什么都没发生，Actions 里没有运行记录 | 没启用工作流 | 回到第二步，点 Actions 里的启用按钮 |
 | `接口返回内容无法识别` | 百度改了接口 | 见下方「接口失效」 |
 
@@ -160,20 +180,20 @@ Cookie 不是永久的。以下情况会立即失效：
 
 1. 打开你 Fork 后的仓库首页
 2. 如果显示 `This branch is N commits behind limaosou:main`，点右侧 **Sync fork** → **Update branch**
-3. Secret 不会因为同步而丢失，无需重新配置
+3. 所有 Secret 不会因为同步而丢失，无需重新配置
 
 ## 关于费用与作者维护
 
 - **零成本**：运行在 GitHub Actions 免费额度内。公共仓库的 Actions 分钟数不计量；私有仓库免费额度是每月 2000 分钟，本任务每月约消耗 10–20 分钟。
 - **作者不需要维护服务器**：没有后端、没有数据库、没有中转。作者只提供代码，运行在**每个使用者自己的账号**里。
-- **你的 Cookie 作者看不到**：存在你仓库的 Secret 中，GitHub 加密存储，日志和代码里都不会出现。
+- **你的 Cookie、推送密钥作者看不到**：存在你仓库的 Secret 中，GitHub 加密存储，日志和代码里都不会打印密钥明文。
 
 ## 目录结构
 
 ```
-.github/workflows/signin.yml     定时任务（一天两次）
+.github/workflows/signin.yml     定时任务（一天两次，同时注入BAIDU_COOKIE、SCX_KEY、SC3_KEY）
 .github/workflows/keepalive.yml  保活（防止 60 天无活动被自动停用）
-scripts/signin.js                主脚本，零依赖，Node 18+
+scripts/signin.js                主脚本，零依赖，Node 18+，自动兼容 SCX_KEY / SC3_KEY
 .cookie                          仅本地调试用，已在 .gitignore
 ```
 
@@ -188,8 +208,11 @@ GitHub 规定：仓库连续 **60 天没有任何提交** 时，会自动停用�
 装了 Node 18+ 的话可以本地跑：
 
 ```bash
-# 完整 Cookie 串
+# 完整Cookie串，不带推送
 BAIDU_COOKIE="BDUSS=xxx; STOKEN=xxx; ..." node scripts/signin.js
+
+# 带上推送密钥本地测试
+BAIDU_COOKIE="xxx" SCX_KEY="scx-xxx" node scripts/signin.js
 
 # 只验证 Cookie 是否有效，不签到
 BAIDU_COOKIE="..." node scripts/signin.js --check
@@ -204,3 +227,5 @@ BAIDU_COOKIE="..." node scripts/signin.js --check
 ## License
 
 MIT © 狸猫
+
+如果你想要，我还可以单独给你写一个【推送配置FAQ小节】放进去。
