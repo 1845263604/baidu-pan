@@ -41,5 +41,6 @@ jobs:
       - name: 执行签到
         env:
           # 从仓库 Secret 读取完整 Cookie 串（必须同时包含 BDUSS 和 STOKEN 两个字段）
+          SC3_KEY: ${{ secrets.SC3_KEY }}
           BAIDU_COOKIE: ${{ secrets.BAIDU_COOKIE }}
         run: node scripts/signin.js
