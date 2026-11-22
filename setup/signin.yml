@@ -36,10 +36,12 @@ jobs:
       - name: 准备 Node 环境
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'  # 升级到22，消除黄色弃用警告
 
-      - name: 安装依赖
-        run: npm install superagent
+      - name: 初始化package.json + 安装superagent
+        run: |
+          npm init -y
+          npm install superagent
 
       - name: 执行签到
         env:
