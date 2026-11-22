@@ -79,14 +79,15 @@ const SUMMARY_FILE = process.env.GITHUB_STEP_SUMMARY || '';
 
 // ===================== SCMax 推送函数 superagent form版本（和你参考push代码风格一致） =====================
 async function sendSC3(title, desp) {
-  const SCX_KEY = process.env.SCX_KEY;
+  // 兼容 SCX_KEY / SC3_KEY 两个名字，避免输错
+  const SCX_KEY = process.env.SCX_KEY || process.env.SC3_KEY;
   if (!SCX_KEY) {
-    console.log("⚠️ 未配置SCX_KEY，跳过Server酱SCMax推送");
+    console.log("⚠️ 未配置SCX_KEY/SC3_KEY，跳过Server酱SCMax推送");
     return;
   }
   const match = SCX_KEY.match(/^scx-(\d+)-/);
   if (!match) {
-    console.error("❌ SCX_KEY格式错误，必须是 scx-数字-xxxx");
+    console.log("⚠️ Key格式不对（不是scx-数字-xxx），无法解析uid，跳过推送");
     return;
   }
   const uid = match[1];
@@ -112,6 +113,7 @@ async function sendSC3(title, desp) {
     console.error("❌ Server酱SCMax推送异常：", err.message);
   }
 }
+
 // =====================================================================
 
 // ---------------------------------------------------------------- 输出层
