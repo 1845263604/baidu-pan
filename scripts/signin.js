@@ -77,6 +77,28 @@ const ALREADY_RE =
 const IN_ACTIONS = process.env.GITHUB_ACTIONS === 'true';
 const SUMMARY_FILE = process.env.GITHUB_STEP_SUMMARY || '';
 
+// ===================== SC3推送函数 新增 =====================
+async function sendSC3(title, desp) {
+  const SC3_KEY = process.env.SC3_KEY;
+  if (!SC3_KEY) {
+    console.log("⚠️ 未配置SC3_KEY，跳过SC3推送");
+    return;
+  }
+  const url = `https://10348.max.ft07.com/send/${SC3_KEY}?title=${encodeURIComponent(title)}&desp=${encodeURIComponent(desp)}`;
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    if (res.ok) {
+      console.log("✅ SC3推送成功：", text);
+    } else {
+      console.log("❌ SC3推送失败：", text);
+    }
+  } catch (err) {
+    console.log("❌ SC3推送异常：", err.message);
+  }
+}
+// =========================================================
+
 // ---------------------------------------------------------------- 输出层
 
 /** GitHub Actions 会把 ::error:: 渲染成红色标注，普通人不用翻日志就能看到原因 */
@@ -433,6 +455,21 @@ async function main() {
   say('-'.repeat(46));
   for (const r of results) say(`${r.ok ? '[√]' : '[×]'} ${r.name}：${r.msg}`);
   say('-'.repeat(46));
+
+  // ========== 拼接推送文本，调用SC3推送 ==========
+  let pushContent = `百度网盘签到 — ${today()}\n`;
+  for (const r of results) {
+    pushContent += `${r.ok ? '[√]' : '[×]'} ${r.name}：${r.msg}\n`;
+  }
+  if (cookieDead) {
+    pushContent += "\n⚠️ Cookie 已失效，需要重新获取更新！";
+  } else if (failed.length) {
+    pushContent += "\n⚠️ 部分任务失败，可以重试";
+  } else {
+    pushContent += "\n✅ 全部任务完成";
+  }
+  await sendSC3("百度网盘签到通知", pushContent);
+  // =============================================
 
   if (cookieDead) {
     say('[!] Cookie 已失效，需要重新获取并更新 Secret（见 README「Cookie 失效怎么办」）');
