@@ -28,6 +28,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const superagent = require("superagent");
 
 const APP_ID = '250528';
 const WEB = '5';
@@ -77,34 +78,40 @@ const ALREADY_RE =
 const IN_ACTIONS = process.env.GITHUB_ACTIONS === 'true';
 const SUMMARY_FILE = process.env.GITHUB_STEP_SUMMARY || '';
 
-// ===================== SC3推送函数 POST JSON 版本 =====================
+// ===================== SCMax 推送函数 superagent form版本（和你参考push代码风格一致） =====================
 async function sendSC3(title, desp) {
-  const SC3_KEY = process.env.SC3_KEY;
-  if (!SC3_KEY) {
-    console.log("⚠️ 未配置SC3_KEY，跳过SC3推送");
+  const SCX_KEY = process.env.SCX_KEY;
+  if (!SCX_KEY) {
+    console.log("⚠️ 未配置SCX_KEY，跳过Server酱SCMax推送");
     return;
   }
-  const url = `https://10348.max.ft07.com/send/${SC3_KEY}`;
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        title,
-        desp
-      })
-    });
-    const text = await res.text();
-    if (res.ok) {
-      console.log("✅ SC3推送成功：", text);
-    } else {
-      console.log("❌ SC3推送失败：", text);
-    }
-  } catch (err) {
-    console.log("❌ SC3推送异常：", err.message);
+  const match = SCX_KEY.match(/^scx-(\d+)-/);
+  if (!match) {
+    console.error("❌ SCX_KEY格式错误，必须是 scx-数字-xxxx");
+    return;
   }
+  const uid = match[1];
+  const url = `https://${uid}.max.ft07.com/${SCX_KEY}.send`;
+
+  const data = {
+    title,
+    desp: desp.replaceAll("\n", "\n\n"),
+  };
+  superagent
+    .post(url)
+    .type("form")
+    .send(data)
+    .then(() => {
+      console.log("✅ Server酱SCMax推送成功");
+    })
+    .catch((err) => {
+      if (err.response?.text) {
+        const info = JSON.parse(err.response.text);
+        console.error(`❌ Server酱SCMax推送失败:${info.info || info}`);
+      } else {
+        console.error(`❌ Server酱SCMax推送失败:${JSON.stringify(err)}`);
+      }
+    });
 }
 // =====================================================================
 
@@ -465,7 +472,7 @@ async function main() {
   for (const r of results) say(`${r.ok ? '[√]' : '[×]'} ${r.name}：${r.msg}`);
   say('-'.repeat(46));
 
-  // ========== 拼接推送文本，调用SC3推送 ==========
+  // ========== 拼接推送文本，调用SCMax推送 ==========
   let pushContent = `百度网盘签到 — ${today()}\n`;
   for (const r of results) {
     pushContent += `${r.ok ? '[√]' : '[×]'} ${r.name}：${r.msg}\n`;
