@@ -14,8 +14,9 @@ on:
   schedule:
     - cron: '17 1 * * *'
     - cron: '17 13 * * *'
-  workflow_dispatch:
+  workflow_dispatch: # 手动触发，首次配置完用来验证
 
+# 同一时间只跑一个，避免两次触发撞车
 concurrency:
   group: baidu-pan-signin
   cancel-in-progress: false
@@ -35,11 +36,10 @@ jobs:
       - name: 准备 Node 环境
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: 执行签到
         env:
-          SCX_KEY: ${{ secrets.SCX_KEY }}
-          SC3_KEY: ${{ secrets.SC3_KEY }}
           BAIDU_COOKIE: ${{ secrets.BAIDU_COOKIE }}
+          SC3_KEY: ${{ secrets.SC3_KEY }}
         run: node scripts/signin.js
